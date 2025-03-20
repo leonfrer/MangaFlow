@@ -61,7 +61,7 @@ struct ContentView: View {
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
             ToolbarItemGroup {
-                Button(action: {ZipHelper.createAndSaveZip(filePathList: imageNames)}) {
+                Button(action: { ZipHelper.createAndSaveZip(filePathList: imageNames) }) {
                     Label("导出", systemImage: "square.and.arrow.up.on.square")
                 }
                 .disabled(imageNames.count == 0)
@@ -171,59 +171,98 @@ struct ContentView: View {
         }
     }
 
-    // 與左邊的圖片合併
+    // 与左边的图片合并
     private func mergeWithLeft() {
-        guard let index = selectedIndex, index > 0 else { return }
+        guard let index = selectedIndex, index > 0, index < imageNames.count else {
+            print("索引无效或无左边图片")
+            return
+        }
         let leftIndex = ltr ? index - 1 : index + 1
+        guard leftIndex >= 0, leftIndex < imageNames.count else { return }
+
         let leftImagePath = imageNames[leftIndex]
         let currentImagePath = imageNames[index]
 
-        if let mergedImage = mergeImages(leftImagePath, currentImagePath) {
-            saveMergedImage(mergedImage, at: index, to: leftIndex)
+        if let mergedImage = ImageHelper.mergeImages(leftImagePath, currentImagePath) {
+            saveMergedImage(mergedImage, at: index, to: leftIndex, isLeftMerge: true)
         }
     }
 
-    // 與右邊的圖片合併
+    // 与右边的图片合并
     private func mergeWithRight() {
-        guard let index = selectedIndex, index < imageNames.count - 1 else { return }
-        let currentImagePath = imageNames[index]
+        guard let index = selectedIndex, index < imageNames.count - 1 else {
+            print("索引无效或无右边图片")
+            return
+        }
         let rightIndex = ltr ? index + 1 : index - 1
+        guard rightIndex >= 0, rightIndex < imageNames.count else { return }
+
+        let currentImagePath = imageNames[index]
         let rightImagePath = imageNames[rightIndex]
 
-        if let mergedImage = mergeImages(currentImagePath, rightImagePath) {
-            saveMergedImage(mergedImage, at: index, to: rightIndex)
+        if let mergedImage = ImageHelper.mergeImages(currentImagePath, rightImagePath) {
+            saveMergedImage(mergedImage, at: index, to: rightIndex, isLeftMerge: false)
         }
     }
 
-    private func saveMergedImage(_ image: NSImage, at index: Int, to anotherIndex: Int) {
+    private func saveMergedImage(
+        _ image: NSImage, at index: Int, to anotherIndex: Int, isLeftMerge: Bool
+    ) {
         guard let tiffData = image.tiffRepresentation,
             let bitmapRep = NSBitmapImageRep(data: tiffData),
             let pngData = bitmapRep.representation(using: .png, properties: [:])
-        else { return }
+        else {
+            print("无法生成 PNG 数据")
+            return
+        }
 
         do {
-            // 強制使用 PNG 格式保存以保持無損
-            let originalURL = URL(fileURLWithPath: imageNames[index])
-            let pngURL = originalURL.deletingPathExtension().appendingPathExtension("png")
+            // 根据合并方向决定保存位置
+            let saveIndex = isLeftMerge ? min(index, anotherIndex) : min(index, anotherIndex)
+            let removeIndex = isLeftMerge ? max(index, anotherIndex) : max(index, anotherIndex)
+            let originalURL = URL(fileURLWithPath: imageNames[saveIndex])
+
+            // 生成唯一文件名，避免冲突
+            let fileName = originalURL.deletingPathExtension().lastPathComponent
+            let directory = originalURL.deletingLastPathComponent()
+            let uniqueName = "\(fileName)_\(UUID().uuidString).png"
+            let pngURL = directory.appendingPathComponent(uniqueName)
+
+            // 保存新文件
             try pngData.write(to: pngURL)
 
-            // 更新列表為新 PNG 文件
-            imageNames[index] = pngURL.path
-            try FileManager.default.removeItem(at: originalURL)
-            try FileManager.default.removeItem(at: URL(fileURLWithPath: imageNames[anotherIndex]))
+            // 删除原始文件
+            let originalAnotherURL = URL(fileURLWithPath: imageNames[removeIndex])
+            if FileManager.default.fileExists(atPath: originalURL.path) {
+                try FileManager.default.removeItem(at: originalURL)
+            }
+            if FileManager.default.fileExists(atPath: originalAnotherURL.path) {
+                try FileManager.default.removeItem(at: originalAnotherURL)
+            }
 
-            // 刷新圖片
+            // 更新 imageNames 数组并移除多余项
+            imageNames[saveIndex] = pngURL.path
+            imageNames.remove(at: removeIndex)
+
+            // 更新 selectedIndex
+            if let currentSelected = selectedIndex {
+                selectedIndex =
+                    currentSelected > removeIndex ? currentSelected - 1 : currentSelected
+                if selectedIndex == removeIndex { selectedIndex = saveIndex }
+            }
+
+            // 刷新图片
             selectedImage = image
 
         } catch {
-            print("保存失敗: \(error)")
+            print("保存失败: \(error)")
         }
     }
 
     private func rotateImage() {
         guard let index = selectedIndex else { return }
         let imagePath = imageNames[index]
-        guard let rotatedImage = rotateNSImage(imagePath: imagePath, angle: 90)
+        guard let rotatedImage = ImageHelper.rotateNSImage(imagePath: imagePath, angle: 90)
         else { return }
 
         // 取得原圖片的格式（副檔名）
