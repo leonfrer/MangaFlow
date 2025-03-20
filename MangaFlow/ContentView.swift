@@ -61,6 +61,10 @@ struct ContentView: View {
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
             ToolbarItemGroup {
+                Button(action: {ZipHelper.createAndSaveZip(filePathList: imageNames)}) {
+                    Label("导出", systemImage: "square.and.arrow.up.on.square")
+                }
+                .disabled(imageNames.count == 0)
                 Toggle(
                     "翻页方向",
                     systemImage: "book.pages",
