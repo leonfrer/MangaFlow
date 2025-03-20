@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var imageNames: [String] = []
     @State private var previewHeight: CGFloat = 300
     @State private var selectedIndex: Int? = nil
+    @State private var ltr = true
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,6 +47,7 @@ struct ContentView: View {
                         }
                     }
                 }
+                .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
                 .padding()
             }
             .frame(height: 100)
@@ -53,6 +55,7 @@ struct ContentView: View {
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
             ToolbarItemGroup {
+                Toggle("从左到右", isOn: $ltr)
                 Button(action: rotateImage) {
                     Label("旋轉", systemImage: "rotate.left")
                 }
@@ -60,15 +63,13 @@ struct ContentView: View {
                 Button(action: mergeWithLeft) {
                     Label("與左邊合併", systemImage: "arrow.left.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == 0)  // 第一張圖不能與左邊合併
+                .disabled(selectedIndex == nil || selectedIndex == (ltr ? 0 : imageNames.count - 1))  // 第一張圖不能與左邊合併
 
                 Button(action: mergeWithRight) {
                     Label("與右邊合併", systemImage: "arrow.right.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == imageNames.count - 1)  // 最後一張圖不能與右邊合併
+                .disabled(selectedIndex == nil || selectedIndex == (ltr ? imageNames.count - 1 : 0))  // 最後一張圖不能與右邊合併
 
-                Picker
-                
                 Button(action: openFilePicker) {
                     Label("添加圖片", systemImage: "plus.viewfinder")
                 }
@@ -121,11 +122,12 @@ struct ContentView: View {
     // 與左邊的圖片合併
     private func mergeWithLeft() {
         guard let index = selectedIndex, index > 0 else { return }
-        let leftImagePath = imageNames[index - 1]
+        let leftIndex = ltr ? index - 1 : index + 1
+        let leftImagePath = imageNames[leftIndex]
         let currentImagePath = imageNames[index]
 
         if let mergedImage = mergeImages(leftImagePath, currentImagePath) {
-            saveMergedImage(mergedImage, at: index, to: index - 1)
+            saveMergedImage(mergedImage, at: index, to: leftIndex)
         }
     }
 
@@ -133,10 +135,11 @@ struct ContentView: View {
     private func mergeWithRight() {
         guard let index = selectedIndex, index < imageNames.count - 1 else { return }
         let currentImagePath = imageNames[index]
-        let rightImagePath = imageNames[index + 1]
+        let rightIndex = ltr ? index + 1 : index - 1
+        let rightImagePath = imageNames[rightIndex]
 
         if let mergedImage = mergeImages(currentImagePath, rightImagePath) {
-            saveMergedImage(mergedImage, at: index, to: index + 1)
+            saveMergedImage(mergedImage, at: index, to: rightIndex)
         }
     }
 
