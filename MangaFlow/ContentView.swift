@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var previewHeight: CGFloat = 300
     @State private var selectedIndex: Int? = nil
     @State private var ltr = true
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -56,25 +57,6 @@ struct ContentView: View {
                 .padding()
             }
             .frame(height: 100)
-//            .onKeyPress { keyPress in
-//                print(keyPress)
-//                switch keyPress.key {
-//                case .leftArrow:
-//                    if var index = selectedIndex, index > 0 {
-//                        index -= 1
-//                        selectedIndex = index
-//                    }
-//                    return .handled
-//                case .rightArrow:
-//                    if var index = selectedIndex, index < imageNames.count - 1 {
-//                        index += 1
-//                        selectedIndex = index
-//                    }
-//                    return .handled
-//                default:
-//                    return .ignored
-//                }
-//            }
         }
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
@@ -127,6 +109,41 @@ struct ContentView: View {
                 }
             }
         }
+        .focusable(true)
+        .focusEffectDisabled()
+        .onAppear {
+            // 延迟确保视图加载完成后获取焦点
+            DispatchQueue.main.async {
+                isFocused = true
+            }
+        }
+        .onKeyPress { keyPress in
+            switch keyPress.key {
+            case .leftArrow:
+                guard let index = selectedIndex else { return .handled }
+
+                let newIndex = ltr ? index - 1 : index + 1
+                let validRange = 0..<imageNames.count
+
+                guard validRange ~= newIndex else { return .ignored }
+
+                selectedIndex = newIndex
+                return .handled
+            case .rightArrow:
+                guard let index = selectedIndex else { return .handled }
+
+                let newIndex = ltr ? index + 1 : index - 1
+                let validRange = 0..<imageNames.count
+
+                guard validRange ~= newIndex else { return .ignored }
+
+                selectedIndex = newIndex
+                return .handled
+            default:
+                return .ignored
+            }
+        }
+
     }
 
     private func updateLayout(for size: CGSize) {
