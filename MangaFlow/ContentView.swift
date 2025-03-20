@@ -24,6 +24,12 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onTapGesture {
+                if var index = selectedIndex, index < imageNames.count - 1 {
+                    index += 1
+                    selectedIndex = index
+                }
+            }
 
             Divider()
 
@@ -40,7 +46,6 @@ struct ContentView: View {
                                 .frame(width: 80, height: 80)
                                 .padding(4)
                                 .onTapGesture {
-                                    selectedImage = nsImage
                                     selectedIndex = index
                                 }
                                 .border(selectedIndex == index ? Color.blue : Color.gray, width: 2)
@@ -51,11 +56,35 @@ struct ContentView: View {
                 .padding()
             }
             .frame(height: 100)
+//            .onKeyPress { keyPress in
+//                print(keyPress)
+//                switch keyPress.key {
+//                case .leftArrow:
+//                    if var index = selectedIndex, index > 0 {
+//                        index -= 1
+//                        selectedIndex = index
+//                    }
+//                    return .handled
+//                case .rightArrow:
+//                    if var index = selectedIndex, index < imageNames.count - 1 {
+//                        index += 1
+//                        selectedIndex = index
+//                    }
+//                    return .handled
+//                default:
+//                    return .ignored
+//                }
+//            }
         }
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
             ToolbarItemGroup {
-                Toggle("从左到右", isOn: $ltr)
+                Toggle(
+                    "翻页方向",
+                    systemImage: "book.pages",
+                    isOn: $ltr
+                )
+                .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
                 Button(action: rotateImage) {
                     Label("旋轉", systemImage: "rotate.left")
                 }
@@ -88,11 +117,13 @@ struct ContentView: View {
         )
         .onChange(of: imageNames) { oldValue, newValue in
             if oldValue.count == 0 && selectedImage == nil {
-                if let firstImagePath = imageNames.first,
-                    let firstImage = NSImage(contentsOf: URL(fileURLWithPath: firstImagePath))
-                {
-                    selectedImage = firstImage
-                    selectedIndex = 0
+                selectedIndex = 0
+            }
+        }
+        .onChange(of: selectedIndex) { _, newValue in
+            if let index = newValue, index >= 0, index < imageNames.count {
+                if let nsImage = NSImage(contentsOf: URL(fileURLWithPath: imageNames[index])) {
+                    selectedImage = nsImage
                 }
             }
         }
