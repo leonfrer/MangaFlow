@@ -70,56 +70,130 @@ class ImageHelper {
         return mergedImage
     }
 
-    static func rotateNSImage(imagePath: String, angle: CGFloat) -> NSImage? {
-        // 讀取圖片
-        guard let image = NSImage(contentsOfFile: imagePath) else {
-            print("❌ 無法加載圖片：\(imagePath)")
+    static func rotateNSImage(imagePath: String, angle: CGFloat) -> URL? {
+        let url = URL(fileURLWithPath: imagePath)
+        let ext = url.pathExtension.lowercased()
+
+        let newUrl = replaceFilenameWithUUID(fileURL: url)
+
+        if ext == "jpg" || ext == "jpeg" {
+            rotateJPGLosslessly(inputURL: url, outputURL: newUrl, angle: 90)
+        } else if ext == "png" {
+            rotatePNG(inputURL: url, outputURL: newUrl, angle: 90)
+        } else {
             return nil
         }
 
-        // 取得 CGImage
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            print("❌ 無法獲取 CGImage")
-            return nil
+        return newUrl
+    }
+
+    private static func replaceFilenameWithUUID(fileURL: URL) -> URL {
+        let fileExtension = fileURL.pathExtension  // 獲取文件後綴
+        let newFilename = UUID().uuidString  // 生成 UUID
+        let newFilenameWithExt =
+            fileExtension.isEmpty ? newFilename : "\(newFilename).\(fileExtension)"
+
+        return fileURL.deletingLastPathComponent().appendingPathComponent(newFilenameWithExt)
+    }
+
+    private static func rotateJPGLosslessly(inputURL: URL, outputURL: URL, angle: Int) {
+        guard let imageSource = CGImageSourceCreateWithURL(inputURL as CFURL, nil) else {
+            print("無法加載圖片")
+            return
         }
 
-        let radians = angle * CGFloat.pi / 180
-        let imageSize = CGSize(width: CGFloat(cgImage.width), height: CGFloat(cgImage.height))
+        let properties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as? [CFString: Any]
+        let exifOrientation = properties?[kCGImagePropertyOrientation] as? UInt32 ?? 1
 
-        // 計算旋轉後的新尺寸
-        let newSize = CGRect(origin: .zero, size: imageSize)
-            .applying(CGAffineTransform(rotationAngle: radians))
-            .integral.size
+        let newOrientation: UInt32
+        switch angle {
+        case 90: newOrientation = 8  // EXIF: 逆時針 90 度旋轉
+        case 180: newOrientation = 3  // EXIF: 逆時針 180 度旋轉
+        case 270: newOrientation = 6  // EXIF: 逆時針 270 度旋轉
+        default: newOrientation = exifOrientation
+        }
 
-        let bitmapRep = NSBitmapImageRep(
-            bitmapDataPlanes: nil,
-            pixelsWide: Int(newSize.width),
-            pixelsHigh: Int(newSize.height),
-            bitsPerSample: 8,
-            samplesPerPixel: 4,
-            hasAlpha: true,
-            isPlanar: false,
-            colorSpaceName: NSColorSpaceName.deviceRGB,
-            bytesPerRow: 0,
-            bitsPerPixel: 0
+        guard
+            let destination = CGImageDestinationCreateWithURL(
+                outputURL as CFURL, UTType.jpeg.identifier as CFString, 1, nil)
+        else {
+            print("無法創建輸出文件")
+            return
+        }
+
+        let options: [CFString: Any] = [kCGImagePropertyOrientation: newOrientation]
+        CGImageDestinationAddImageFromSource(destination, imageSource, 0, options as CFDictionary)
+        CGImageDestinationFinalize(destination)
+
+        print("旋轉完成: \(outputURL.path)")
+    }
+
+    private static func rotatePNG(inputURL: URL, outputURL: URL, angle: CGFloat) {
+        guard let imageSource = CGImageSourceCreateWithURL(inputURL as CFURL, nil),
+            let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
+        else {
+            print("無法加載圖片")
+            return
+        }
+
+        let radians = -angle * (.pi / 180)  // macOS 坐標系是反向的，這裡取負號來變成順時針旋轉
+        let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
+
+        // 計算旋轉後的畫布大小
+        let newSize = CGSize(
+            width: abs(originalSize.width * cos(radians)) + abs(originalSize.height * sin(radians)),
+            height: abs(originalSize.width * sin(radians)) + abs(originalSize.height * cos(radians))
         )
 
-        guard let context = NSGraphicsContext(bitmapImageRep: bitmapRep!)?.cgContext else {
-            print("❌ 無法創建圖形上下文")
-            return nil
+        // 建立 Core Graphics 透明畫布
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        guard
+            let context = CGContext(
+                data: nil,
+                width: Int(newSize.width),
+                height: Int(newSize.height),
+                bitsPerComponent: cgImage.bitsPerComponent,
+                bytesPerRow: 0,
+                space: colorSpace,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            )
+        else {
+            print("無法創建畫布")
+            return
         }
 
-        // 執行旋轉
+        // 變換坐標系，確保旋轉後圖片居中
         context.translateBy(x: newSize.width / 2, y: newSize.height / 2)
         context.rotate(by: radians)
-        context.translateBy(x: -imageSize.width / 2, y: -imageSize.height / 2)
+        context.translateBy(x: -originalSize.width / 2, y: -originalSize.height / 2)
 
-        context.draw(cgImage, in: CGRect(origin: .zero, size: imageSize))
+        // 繪製原始圖片
+        context.draw(cgImage, in: CGRect(origin: .zero, size: originalSize))
+
+        // 取得旋轉後的圖片
+        guard let rotatedCGImage = context.makeImage() else {
+            print("旋轉失敗")
+            return
+        }
 
         // 轉換為 NSImage
-        let rotatedImage = NSImage(size: newSize)
-        rotatedImage.addRepresentation(bitmapRep!)
+        let rotatedImage = NSImage(cgImage: rotatedCGImage, size: newSize)
 
-        return rotatedImage
+        // 儲存為 PNG
+        guard let pngData = rotatedImage.tiffRepresentation,
+            let bitmap = NSBitmapImageRep(data: pngData),
+            let finalData = bitmap.representation(using: .png, properties: [:])
+        else {
+            print("無法轉換為 PNG")
+            return
+        }
+
+        do {
+            try finalData.write(to: outputURL)
+            print("PNG 旋轉完成: \(outputURL.path)")
+        } catch {
+            print("保存 PNG 失敗: \(error)")
+        }
     }
+
 }

@@ -262,50 +262,12 @@ struct ContentView: View {
     private func rotateImage() {
         guard let index = selectedIndex else { return }
         let imagePath = imageNames[index]
-        guard let rotatedImage = ImageHelper.rotateNSImage(imagePath: imagePath, angle: 90)
+        guard let url = ImageHelper.rotateNSImage(imagePath: imagePath, angle: 90)
         else { return }
-
-        // 取得原圖片的格式（副檔名）
-        let fileExtension = (imagePath as NSString).pathExtension.lowercased()
-
-        // 轉換為 TIFF（用來生成不同格式）
-        guard let tiffData = rotatedImage.tiffRepresentation,
-            let bitmapRep = NSBitmapImageRep(data: tiffData)
-        else {
-            print("❌ 無法轉換為位圖格式")
+        imageNames[index] = url.absoluteString
+        guard let image = NSImage(contentsOf: url) else {
             return
         }
-
-        // 根據原始格式選擇保存方式
-        let imageData: Data?
-
-        switch fileExtension {
-        case "png":
-            imageData = bitmapRep.representation(using: .png, properties: [:])
-        case "jpg", "jpeg":
-            imageData = bitmapRep.representation(
-                using: .jpeg, properties: [.compressionFactor: 1.0])
-        case "tiff":
-            imageData = tiffData
-        default:
-            print("⚠️ 不支持的格式：\(fileExtension)")
-            return
-        }
-
-        guard let finalImageData = imageData else {
-            print("❌ 無法生成最終圖片數據")
-            return
-        }
-
-        // 覆蓋原圖片
-        do {
-            try finalImageData.write(to: URL(fileURLWithPath: imagePath))
-            print("✅ 成功覆蓋圖片：\(imagePath) (格式：\(fileExtension))")
-        } catch {
-            print("❌ 無法保存圖片：\(error)")
-            return
-        }
-
-        selectedImage = rotatedImage
+        selectedImage = image
     }
 }
