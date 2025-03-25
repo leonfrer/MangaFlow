@@ -6,7 +6,7 @@ struct ContentView: View {
     @State private var imageNames: [String] = []
     @State private var previewHeight: CGFloat = 300
     @State private var selectedIndex: Int? = nil
-    @State private var ltr = true
+    @ObservedObject var config = ConfigManager.shared
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -53,7 +53,7 @@ struct ContentView: View {
                         }
                     }
                 }
-                .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
+                .environment(\.layoutDirection, config.ltr ? .leftToRight : .rightToLeft)
                 .padding()
             }
             .frame(height: 100)
@@ -68,9 +68,9 @@ struct ContentView: View {
                 Toggle(
                     "翻页方向",
                     systemImage: "book.pages",
-                    isOn: $ltr
+                    isOn: $config.ltr
                 )
-                .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
+                .environment(\.layoutDirection, config.ltr ? .leftToRight : .rightToLeft)
                 Button(action: rotateImage) {
                     Label("旋轉", systemImage: "rotate.left")
                 }
@@ -78,12 +78,12 @@ struct ContentView: View {
                 Button(action: mergeWithLeft) {
                     Label("與左邊合併", systemImage: "arrow.left.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == (ltr ? 0 : imageNames.count - 1))  // 第一張圖不能與左邊合併
+                .disabled(selectedIndex == nil || selectedIndex == (config.ltr ? 0 : imageNames.count - 1))  // 第一張圖不能與左邊合併
 
                 Button(action: mergeWithRight) {
                     Label("與右邊合併", systemImage: "arrow.right.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == (ltr ? imageNames.count - 1 : 0))  // 最後一張圖不能與右邊合併
+                .disabled(selectedIndex == nil || selectedIndex == (config.ltr ? imageNames.count - 1 : 0))  // 最後一張圖不能與右邊合併
 
                 Button(action: openFilePicker) {
                     Label("添加圖片", systemImage: "plus.viewfinder")
@@ -126,7 +126,7 @@ struct ContentView: View {
             case .leftArrow:
                 guard let index = selectedIndex else { return .handled }
 
-                let newIndex = ltr ? index - 1 : index + 1
+                let newIndex = config.ltr ? index - 1 : index + 1
                 let validRange = 0..<imageNames.count
 
                 guard validRange ~= newIndex else { return .ignored }
@@ -136,7 +136,7 @@ struct ContentView: View {
             case .rightArrow:
                 guard let index = selectedIndex else { return .handled }
 
-                let newIndex = ltr ? index + 1 : index - 1
+                let newIndex = config.ltr ? index + 1 : index - 1
                 let validRange = 0..<imageNames.count
 
                 guard validRange ~= newIndex else { return .ignored }
@@ -177,7 +177,7 @@ struct ContentView: View {
             print("索引无效或无左边图片")
             return
         }
-        let leftIndex = ltr ? index - 1 : index + 1
+        let leftIndex = config.ltr ? index - 1 : index + 1
         guard leftIndex >= 0, leftIndex < imageNames.count else { return }
 
         let leftImagePath = imageNames[leftIndex]
@@ -194,7 +194,7 @@ struct ContentView: View {
             print("索引无效或无右边图片")
             return
         }
-        let rightIndex = ltr ? index + 1 : index - 1
+        let rightIndex = config.ltr ? index + 1 : index - 1
         guard rightIndex >= 0, rightIndex < imageNames.count else { return }
 
         let currentImagePath = imageNames[index]

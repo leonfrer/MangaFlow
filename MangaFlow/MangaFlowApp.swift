@@ -2,9 +2,11 @@ import SwiftUI
 
 @main
 struct MangaFlowApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
+  @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
     }
+  }
 }

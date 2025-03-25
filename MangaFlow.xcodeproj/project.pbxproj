@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		35D6F2E32D92A383009BBA98 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 35D6F2E22D92A383009BBA98 /* Config.plist */; };
 		35F9F0812D8C8D38008CDD18 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F9F0802D8C8D38008CDD18 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
@@ -31,24 +32,12 @@
 		3501843E2D89100B00D2F349 /* MangaFlow.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MangaFlow.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3501844F2D89100C00D2F349 /* MangaFlowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MangaFlowTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		350184592D89100C00D2F349 /* MangaFlowUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MangaFlowUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35D6F2E22D92A383009BBA98 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3501846D2D89151D00D2F349 /* Exceptions for "MangaFlow" folder in "MangaFlow" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 3501843D2D89100B00D2F349 /* MangaFlow */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		350184402D89100B00D2F349 /* MangaFlow */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				3501846D2D89151D00D2F349 /* Exceptions for "MangaFlow" folder in "MangaFlow" target */,
-			);
 			path = MangaFlow;
 			sourceTree = "<group>";
 		};
@@ -93,6 +82,7 @@
 		350184352D89100B00D2F349 = {
 			isa = PBXGroup;
 			children = (
+				35D6F2E22D92A383009BBA98 /* Config.plist */,
 				350184402D89100B00D2F349 /* MangaFlow */,
 				350184522D89100C00D2F349 /* MangaFlowTests */,
 				3501845C2D89100C00D2F349 /* MangaFlowUITests */,
@@ -234,6 +224,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				35D6F2E32D92A383009BBA98 /* Config.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
