@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var imageNames: [String] = []
     @State private var previewHeight: CGFloat = 300
     @State private var selectedIndex: Int? = nil
+    @State private var thumbnailCache: [String: NSImage] = [:]
     @ObservedObject var config = ConfigManager.shared
     @FocusState private var isFocused: Bool
 
@@ -35,28 +36,53 @@ struct ContentView: View {
             Divider()
 
             // Thumbnail Image Area
-            ScrollView(.horizontal) {
-                LazyHStack {
-                    ForEach(imageNames.indices, id: \.self) { index in
-                        if let nsImage = NSImage(
-                            contentsOf: URL(fileURLWithPath: imageNames[index]))
-                        {
-                            Image(nsImage: nsImage)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 80, height: 80)
-                                .padding(4)
-                                .onTapGesture {
-                                    selectedIndex = index
+            Group {
+                if imageNames.isEmpty {
+                    // 不显示任何内容或显示占位符
+                    EmptyView()
+                } else {
+                    // 图片选择器
+                    HStack {
+                        // 这个 Spacer 在 RTL 模式下会将内容推到右侧
+                        if !config.ltr {
+                            Spacer()
+                        }
+
+                        ScrollViewReader { scrollProxy in
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                LazyHStack(spacing: 8) {
+                                    // 使用常规数组顺序，依靠 HStack 和外部的 layoutDirection 控制排列
+                                    ForEach(imageNames.indices, id: \.self) { index in
+                                        ImageThumbnail(
+                                            path: imageNames[index],
+                                            isSelected: selectedIndex == index,
+                                            thumbnailCache: $thumbnailCache,
+                                            onTap: { selectedIndex = index }
+                                        )
+                                    }
                                 }
-                                .border(selectedIndex == index ? Color.blue : Color.gray, width: 2)
+                                .padding(.horizontal, 8)
+                            }
+                            .frame(height: 100)
+                            .onChange(of: selectedIndex) { _, newIndex in
+                                // 当选中索引变化时，滚动到对应位置
+                                if let index = newIndex {
+                                    withAnimation {
+                                        scrollProxy.scrollTo(index, anchor: .center)
+                                    }
+                                }
+                            }
+                        }
+
+                        // 这个 Spacer 在 LTR 模式下会将内容推到左侧
+                        if config.ltr {
+                            Spacer()
                         }
                     }
+                    // 在外层容器设置 layoutDirection
+                    .environment(\.layoutDirection, config.ltr ? .leftToRight : .rightToLeft)
                 }
-                .environment(\.layoutDirection, config.ltr ? .leftToRight : .rightToLeft)
-                .padding()
             }
-            .frame(height: 100)
         }
         .frame(minWidth: 600, minHeight: 400)
         .toolbar {
@@ -78,12 +104,16 @@ struct ContentView: View {
                 Button(action: mergeWithLeft) {
                     Label("與左邊合併", systemImage: "arrow.left.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == (config.ltr ? 0 : imageNames.count - 1))  // 第一張圖不能與左邊合併
+                .disabled(
+                    selectedIndex == nil || selectedIndex == (config.ltr ? 0 : imageNames.count - 1)
+                )  // 第一張圖不能與左邊合併
 
                 Button(action: mergeWithRight) {
                     Label("與右邊合併", systemImage: "arrow.right.square")
                 }
-                .disabled(selectedIndex == nil || selectedIndex == (config.ltr ? imageNames.count - 1 : 0))  // 最後一張圖不能與右邊合併
+                .disabled(
+                    selectedIndex == nil || selectedIndex == (config.ltr ? imageNames.count - 1 : 0)
+                )  // 最後一張圖不能與右邊合併
 
                 Button(action: openFilePicker) {
                     Label("添加圖片", systemImage: "plus.viewfinder")

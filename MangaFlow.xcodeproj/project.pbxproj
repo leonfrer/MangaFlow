@@ -35,9 +35,22 @@
 		35D6F2E22D92A383009BBA98 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		35D6F2E42D92A60C009BBA98 /* Exceptions for "MangaFlow" folder in "MangaFlow" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 3501843D2D89100B00D2F349 /* MangaFlow */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		350184402D89100B00D2F349 /* MangaFlow */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				35D6F2E42D92A60C009BBA98 /* Exceptions for "MangaFlow" folder in "MangaFlow" target */,
+			);
 			path = MangaFlow;
 			sourceTree = "<group>";
 		};
