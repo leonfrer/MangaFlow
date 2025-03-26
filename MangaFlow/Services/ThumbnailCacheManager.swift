@@ -1,54 +1,34 @@
+import Combine
 import SwiftUI
 
-struct ImageThumbnail: View {
-    let path: String
-    let isSelected: Bool
-    @Binding var thumbnailCache: [String: NSImage]
-    let onTap: () -> Void
+class ThumbnailCacheManager: ObservableObject {
+    // Singleton instance for easy access across the app
+    static let shared = ThumbnailCacheManager()
 
-    var body: some View {
-        Group {
-            if let cachedImage = thumbnailCache[path] {
-                let imageSize = cachedImage.size
-                let aspectRatio = imageSize.width / imageSize.height
+    // Published property that will notify observers when changed
+    @Published var cache: [String: NSImage] = [:]
 
-                Image(nsImage: cachedImage)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(
-                        width: aspectRatio >= 1 ? 80 : 80 * aspectRatio,
-                        height: aspectRatio <= 1 ? 80 : 80 / aspectRatio
-                    )
-                    .padding(4)
-                    .onTapGesture(perform: onTap)
-                    .border(isSelected ? Color.blue : Color.gray, width: 2)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(width: 80, height: 80)
-                    .padding(4)
-                    .border(Color.gray, width: 2)
-                    .onAppear {
-                        loadThumbnail(path: path)
-                    }
-            }
+    func loadThumbnail(path: String) {
+        if cache[path] != nil {
+            return
         }
-    }
 
-    private func loadThumbnail(path: String) {
-        DispatchQueue.global(qos: .background).async {
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self = self else { return }
+
             if let fullImage = NSImage(contentsOf: URL(fileURLWithPath: path)) {
                 // 创建并缓存缩略图
+                let size = fullImage.size
                 let thumbnail = resizeImage(
-                    image: fullImage, targetSize: NSSize(width: 160, height: 160))
+                    image: fullImage, targetSize: NSSize(width: size.width, height: size.height))
                 DispatchQueue.main.async {
-                    thumbnailCache[path] = thumbnail
+                    self.cache[path] = thumbnail
                 }
             }
         }
     }
 
-    private func resizeImage(image: NSImage, targetSize: NSSize) -> NSImage {
+    func resizeImage(image: NSImage, targetSize: NSSize) -> NSImage {
         // 创建一个新的、正确尺寸的图像
         let resizedImage = NSImage(size: targetSize)
 
@@ -85,4 +65,5 @@ struct ImageThumbnail: View {
         resizedImage.unlockFocus()
         return resizedImage
     }
+
 }

@@ -27,3 +27,7 @@ This project is currently in the development stage. Several core features are st
 - [ ] Multiple selection support for batch operations
 
 Stay tuned for updates as development progresses!
+
+## Bug fixing
+
+- [x] Thumbnail blank after rotate

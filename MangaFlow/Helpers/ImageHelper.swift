@@ -136,7 +136,7 @@ class ImageHelper {
             return
         }
 
-        let radians = -angle * (.pi / 180)  // macOS 坐標系是反向的，這裡取負號來變成順時針旋轉
+        let radians = angle * (.pi / 180)  // macOS 坐標系是反向的，這裡取負號來變成順時針旋轉
         let originalSize = CGSize(width: cgImage.width, height: cgImage.height)
 
         // 計算旋轉後的畫布大小

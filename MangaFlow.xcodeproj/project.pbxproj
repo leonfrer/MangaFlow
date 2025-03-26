@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		3598D5E32D92B9AB00B109AE /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 3598D5E22D92B99F00B109AE /* README.md */; };
-		35D6F2E32D92A383009BBA98 /* Config.plist in Resources */ = {isa = PBXBuildFile; fileRef = 35D6F2E22D92A383009BBA98 /* Config.plist */; };
 		35F9F0812D8C8D38008CDD18 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 35F9F0802D8C8D38008CDD18 /* ZIPFoundation */; };
 /* End PBXBuildFile section */
 
@@ -34,7 +33,6 @@
 		3501844F2D89100C00D2F349 /* MangaFlowTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MangaFlowTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		350184592D89100C00D2F349 /* MangaFlowUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MangaFlowUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3598D5E22D92B99F00B109AE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		35D6F2E22D92A383009BBA98 /* Config.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Config.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -98,7 +96,6 @@
 			isa = PBXGroup;
 			children = (
 				3598D5E22D92B99F00B109AE /* README.md */,
-				35D6F2E22D92A383009BBA98 /* Config.plist */,
 				350184402D89100B00D2F349 /* MangaFlow */,
 				350184522D89100C00D2F349 /* MangaFlowTests */,
 				3501845C2D89100C00D2F349 /* MangaFlowUITests */,
@@ -240,7 +237,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				35D6F2E32D92A383009BBA98 /* Config.plist in Resources */,
 				3598D5E32D92B9AB00B109AE /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
